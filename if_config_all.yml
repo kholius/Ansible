@@ -1,0 +1,29 @@
+
+---
+
+################ Set IP on infra by Ansible #######################
+
+# Get a ping all
+- hosts: all
+  become: yes
+  become_user: kholius
+  tasks:
+   - name: let's get some IP addresses
+     command: sudo ip a
+
+# Set IP on group A
+- hosts: a1
+  become: yes
+  become_user: kholius
+  tasks:
+   - name: let's set IP A's group
+     command:
+       - sudo ip a
+       - sudo ifconfig
+       - interface: ens33
+       - state: up
+       - address: 192.168.1.150
+       - broadcast: 192.168.1.255
+       - netmask_adr: 255.255.255.0
+
+

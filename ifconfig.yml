@@ -1,0 +1,9 @@
+---
+
+# name: update all endpoints
+- hosts: all
+  become: yes
+  become_user: kholius
+  tasks:
+   - name: let's get some IP addresses
+     command: sudo ip a

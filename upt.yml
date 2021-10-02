@@ -1,0 +1,13 @@
+---
+
+# name: update all endpoints
+- hosts: all
+  become: yes
+  become_user: root
+  tasks:
+    - name: its_an_update
+      command: sudo apt update -y
+#
+#
+    - name: its_an_upgrade
+      command: sudo apt upgrade -y
