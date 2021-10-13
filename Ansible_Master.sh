@@ -24,8 +24,12 @@ echo " for now, it's work only with apt!"
 # 2 = install classique ansible + create user khansible + update + ssh [install; create key] + git [install, create user giter, and mkdir a repos for all script]
 # 3 = ansible configuration [add_host + ssh_copy_id] + mk a rapport 
 
+#################################################################################################
+            # Set Var
+#################################################################################################
 
-
+index_count_host=0
+index_count_grp=0
 
 ##################################################################################################
             # Set Under_Function
@@ -122,7 +126,7 @@ install_git(){
      
     # Install Git
     echo " Install Git... "
-    sudo apt install Git -y 
+    sudo apt install git -y 
     echo " ...Done "
 
     echo " Git Done. " > result_install_git.txt
@@ -130,8 +134,10 @@ install_git(){
     # Init Git
     sudo mkdir /etc/ansible_repos
     sudo chmod 755 /etc/ansible_repos 
-    git init /etc/ansible_repos/
-    ll /etc/ | grep ansible_repos > result_create_repos.txt
+    sudo mv /YAML-Ansible/ /etc/ansible_repos/
+    sudo git init /etc/ansible_repos/
+
+    sudo ll /etc/ | grep ansible_repos > result_create_repos.txt
     
     # prepare rapport
     rapport_install_git=$(cat result_install_git.txt)
@@ -143,27 +149,32 @@ install_git(){
 
 Create_and_Set_ssh(){
     echo " Let's prepare the SSH Service "
-
+    # Install service ssh + restart It to enable
     echo " Install of ssh_server "
     sudo apt install open-ssh-server -y 
     echo " ...Done "
     sudo service sshd restart
 
+    # Generation of RSA Key without Passphrase
     echo " Let's keygen "
-    ssh-keygen -t rsa -N "" 
+    sudo ssh-keygen -t rsa -N "" 
     echo " ...Done "
 
     echo " "
     echo " "
     echo " "
 
+    # Restart the service
     sudo service sshd status
+    echo " "
     sudo service sshd restart
+    echo " "
     sudo service sshd status
-
+    echo " "
     echo " Ready to do id-copy "
 
-
+    echo " "
+    # Backup the sshd_config
     echo " here, we save the SSH_conf "
     cp /etc/ssh/sshd_config /etc/ssh/sshd_config.bak
     ls /etc/ssh/ | grep sshd_config.bak > result_backup_ssh.txt
@@ -179,35 +190,131 @@ Create_and_Set_ssh(){
 
     rapport_ssh_status=$(cat result_ssh_status.txt)
     rapport_ssh_backup=$(cat result_backup_ssh.txt)
+
 }
 
-Create_User_AG(){
+Create_User_A_G(){
 
     echo " Let's create two user : "
+    # Add user for Ansible
     echo " - khansible... "
+    sudo useradd kholius
+    echo kholius:kh0lius | chpasswd
     sudo useradd khansible
     echo khansible:kholius | chpasswd # This password NEED to be change
-    cat /etc/shadow | grep khansible
+    sudo cat /etc/shadow | grep khansible
+    echo "khansible ALL=(ALL:ALL) ALL" >> /etc/sudoers
+    echo "kholius ALL=(ALL:ALL) ALL" >> /etc/sudoers
 
     echo "[...]"
     echo "      and         "
     echo "[...]"
 
+    # Add user for git 
     echo " - giter... "
     sudo useradd giter
     echo giter:kholius | chpasswd # This password NEED to be change
-    cat /etc/shadow | grep giter
+    sudo cat /etc/shadow | grep giter
     echo "    ...Done      "
 
     # prepare rapport
-    cat /etc/shadow | grep khansible > user1.txt
-    cat /etc/shadow | grep giter > user2.txt
+    sudo cat /etc/shadow | grep khansible > user1.txt
+    sudo cat /etc/shadow | grep giter > user2.txt
 
     rapport_user1=$(cat user1.txt)
     rapport_user2=$(cat user2.txt)
 
 }
 
+# 3 = ansible configuration [add_host + ssh_copy_id] + mk a rapport 
+
+Ansible_Config_(){
+
+    # the user want he use the pre conf? 
+    read -p " Would you use the pre-conf settings? [y/n] " rep_preconf
+
+    # If yes --action_for_it
+    # If no --dew_it_himself
+    if [[$rep_preconf -eq "y"]]
+    then
+
+        echo " Let's use the pre-config provide by Kholius... "
+        
+        echo ""
+        echo ""
+        echo ""
+
+        echo " Let's do for hosts file"
+        sudo cp ~/YAML-Ansible/hosts  /etc/ansible/
+        echo " ...Done "
+        
+        echo ""
+        echo ""
+        echo ""
+
+        echo " Transfert all of playbooks "
+        sudo mkdir /etc/ansible/playbooks/
+        sudo cp ~/YAML-Ansible/*.yaml /etc/ansible/playbooks/
+        sudo ls /etc/ansible/playbooks/ | grep .yml
+        echo " ...Done "
+
+        echo " Pre-config provide by Kholius; done. " > result_ansible_conf.txt
+        rapport_ansible_conf=$(cat result_ansible_conf.txt)
+    
+    
+    
+    elif [[$rep_preconf -eq "n"]]
+    then
+        echo " Well dew it yourself! UwU "
+
+        echo " You can find all of file for config Ansible on : "
+        sudo ls /etc/ | grep ansible
+
+        echo " If you need to set the file where endpoints are declared, add them on : "
+        sudo ls /etc/ansible/ | grep hosts
+
+        echo " and if you need to set the file where playbooks are stored, add them on : "
+        sudo ls /etc/ansible/ | grep playbooks
+
+        echo " The general config is stored on"
+        sudo ls /etc/ansible/ | grep ansible.cfg
+
+        echo " Pre-config denied, the user must do configuration himself. (See docs) " > result_ansible_conf.txt
+        rapport_ansible_conf=$(cat result_ansible_conf.txt)
+
+    else
+        echo " Something went wrong... "
+
+    fi
+
+    #read -p " Would you add some host to hosts file ? [ y/n ]"
+    # if yes{
+        #      how much ? = cb_host_to_add
+        #       until $index_count_host -eq $cb_host_to_add
+        #       {
+                #    read -p " which host would you add ? " id_new_host
+                #    read -p " already exist? " host_already_exist
+                #    echo $id_new_host >> /etc/ansible/hosts
+                #    if host_already_exist -eq yes
+                     #  copy_id $id_new_host
+        #       }
+    #       }
+    #           
+    #read -p " Add a new grp? [ y/n ]" rep_add_grp
+    # if $rep_add_grp -eq yes {
+        #       read -p "how much ?" rep_cb_grp
+        #       until $rep_cb_grp -eq $index_count_grp{
+                #   read -p "wich name would you want ?" name_new_grp
+                #   echo "[$name_new_grp]" >> /etc/ansible/hosts
+        #       }
+    #       }
+    
+}
+
+
+
+###############################################################################################
+                # Set Upper Function
 ###############################################################################################
 
 bare(){
