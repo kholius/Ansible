@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ###################################################
-#           Script for an Ansible_Master 
+#           Script for an Ansible_Master
 ###################################################
 
 echo "##############################################################"
@@ -199,7 +199,7 @@ Create_User_A_G(){
     # Add user for Ansible
     echo " - khansible... "
     sudo useradd kholius
-    echo kholius:kh0lius | chpasswd
+    echo kholius:kholius | chpasswd
     sudo useradd khansible
     echo khansible:kholius | chpasswd # This password NEED to be change
     sudo cat /etc/shadow | grep khansible
@@ -311,7 +311,40 @@ Ansible_Config_(){
     
 }
 
+mk_rapport(){
+    # set var for date
+    date > date.txt
+    date_to_rapport=$(cat date.txt)
+    # set var for whoami
+    whoami > whoami.txt
+    whoami_for_rapport=$(cat whoami.txt)
+    #
+    echo " Rapport Inbound..."
+    echo ""
+    echo ""
+    echo " Well did you see the weather today? It's a good day for IT right? "
+    echo ""
+    echo ""
+    echo ""
+    echo ""
 
+    echo "###############################################################################################"
+    echo "###                               Rapport from Ansible Master                               ###"
+    echo "###                               Done the:  $date_to_rapport                               ###"
+    echo "###############################################################################################"
+    echo "###   Hostname set : $rapport_change_hostnem    #### Done by Administrator : $whoami_for_rapport ###"
+    echo "###############################################################################################"
+    echo "###############################################################################################"
+    echo "###____________________________________[NETWORK]____________________________________________###"
+    echo "###                                                                                         ###"
+    echo "###_    Setting IP :  $rapport_change_ip                                                   _###"
+    echo "###_    Gateway :  $rapport_gtw_for_int                                                    _###"
+    echo "###                                                                                         ###"
+    echo "###############################################################################################"
+    echo "###____________________________________[Bundle]____________________________________________###"
+    echo "###      State of Install: $rapport_install_bundle                                        _###"
+    
+}
 
 ###############################################################################################
                 # Set Upper Function
@@ -336,12 +369,20 @@ bare(){
 
 }
 
-Set_Ansible(){
+Set_Ansible_env(){
     echo "#######################################################################"
     echo "###########                    Part Two                    ############"
     echo "#######################################################################"
+
+    install_ansible
+    install_git
+    Create_and_Set_ssh
+    Create_User_A_G
+    update_
+
 
 }
 
 
 bare
+Set_Ansible_env
