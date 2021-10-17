@@ -324,26 +324,83 @@ mk_rapport(){
     echo ""
     echo " Well did you see the weather today? It's a good day for IT right? "
     echo ""
+    sudo mkdir /etc/Rapports_/
     echo ""
     echo ""
     echo ""
 
-    echo "###############################################################################################"
-    echo "###                               Rapport from Ansible Master                               ###"
-    echo "###                               Done the:  $date_to_rapport                               ###"
-    echo "###############################################################################################"
-    echo "###   Hostname set : $rapport_change_hostnem    #### Done by Administrator : $whoami_for_rapport ###"
-    echo "###############################################################################################"
-    echo "###############################################################################################"
-    echo "###____________________________________[NETWORK]____________________________________________###"
-    echo "###                                                                                         ###"
-    echo "###_    Setting IP :  $rapport_change_ip                                                   _###"
-    echo "###_    Gateway :  $rapport_gtw_for_int                                                    _###"
-    echo "###                                                                                         ###"
-    echo "###############################################################################################"
-    echo "###____________________________________[Bundle]____________________________________________###"
-    echo "###      State of Install: $rapport_install_bundle                                        _###"
-    
+    echo "###############################################################################################" >> /etc/Rapports_/rapport01.txt
+    echo "###                               Rapport from Ansible Master                               ###" >> /etc/Rapports_/rapport01.txt
+    echo "                     Done the:  $date_to_rapport        " >> /etc/Rapports_/rapport01.txt
+    echo "###############################################################################################" >> /etc/Rapports_/rapport01.txt
+    echo "###                                           |                                             ###" >> /etc/Rapports_/rapport01.txt
+    echo "###   Hostname set : $rapport_change_hostnem  | Done by Administrator : $whoami_for_rapport "  >> /etc/Rapports_/rapport01.txt
+    echo "###                                           |                                             ###"  >> /etc/Rapports_/rapport01.txt
+    echo "###############################################################################################"  >> /etc/Rapports_/rapport01.txt
+    echo "###############################################################################################" >> /etc/Rapports_/rapport01.txt
+    echo "###____________________________________[NETWORK]____________________________________________###" >> /etc/Rapports_/rapport01.txt
+    echo "###                                                                                         ###" >> /etc/Rapports_/rapport01.txt
+    echo "###_    Setting IP :  $rapport_change_ip                               "  >> /etc/Rapports_/rapport01.txt
+    echo "###                                                                                         ###" >> /etc/Rapports_/rapport01.txt
+    echo "###_    Gateway :  $rapport_gtw_for_int                                 " >> /etc/Rapports_/rapport01.txt
+    echo "###                                                                                         ###" >> /etc/Rapports_/rapport01.txt
+    echo "###############################################################################################" >> /etc/Rapports_/rapport01.txt
+    echo "###____________________________________[Bundle]____________________________________________###" >> /etc/Rapports_/rapport01.txt
+    echo "###                                                                                        ###" >> /etc/Rapports_/rapport01.txt
+    echo "###_     State of Install: $rapport_install_bundle                              " >> /etc/Rapports_/rapport01.txt
+    echo "###                                                                                        ###" >> /etc/Rapports_/rapport01.txt
+    echo "###                                                                                        ###" >> /etc/Rapports_/rapport01.txt
+    echo "##############################################################################################" >> /etc/Rapports_/rapport01.txt
+    echo "###_____________________________________[Ansible]__________________________________________###" >> /etc/Rapports_/rapport01.txt
+    echo "###                                                                                        ###" >> /etc/Rapports_/rapport01.txt
+    echo "###      State of Install: $rapport_install_ansible           " >> /etc/Rapports_/rapport01.txt
+    echo "###                                                                                        ###" >> /etc/Rapports_/rapport01.txt
+    echo "###      State of Configuration : $rapport_ansible_conf       " >> /etc/Rapports_/rapport01.txt
+    echo "###                                                                                        ###" >> /etc/Rapports_/rapport01.txt
+    echo "##############################################################################################" >> /etc/Rapports_/rapport01.txt
+    echo "###______________________________________[Git]_____________________________________________###" >> /etc/Rapports_/rapport01.txt
+    echo "###                                                                                        ###" >> /etc/Rapports_/rapport01.txt
+    echo "###                                                                                        ###" >> /etc/Rapports_/rapport01.txt
+    echo "###      State of Install: $rapport_install_git                                            _" >> /etc/Rapports_/rapport01.txt
+    echo "###                                                                                        ###" >> /etc/Rapports_/rapport01.txt
+    echo "###      Git repos: $rapport_create_repos              " >> /etc/Rapports_/rapport01.txt
+    echo "###      Can be foundon : /etc/ansible_repos/          " >> /etc/Rapports_/rapport01.txt
+    echo "###                                                                                        ###" >> /etc/Rapports_/rapport01.txt
+    echo "##############################################################################################" >> /etc/Rapports_/rapport01.txt
+    echo "###______________________________________[Ssh]_____________________________________________###" >> /etc/Rapports_/rapport01.txt
+    echo "###                                                                                        ###" >> /etc/Rapports_/rapport01.txt
+    echo "###   Package SSH: Open-ssh-server                            " >> /etc/Rapports_/rapport01.txt
+    echo "###                                                                                        ###" >> /etc/Rapports_/rapport01.txt
+    echo "###   Status: $rapport_ssh_status                             " >> /etc/Rapports_/rapport01.txt
+    echo "###                                                                                        ###" >> /etc/Rapports_/rapport01.txt
+    echo "###   Backup: $rapport_ssh_backup                             " >> /etc/Rapports_/rapport01.txt
+    echo "###                                                                                        ###" >> /etc/Rapports_/rapport01.txt
+    echo "##############################################################################################" >> /etc/Rapports_/rapport01.txt
+    echo "###______________________________________[User]____________________________________________###" >> /etc/Rapports_/rapport01.txt
+    echo "###                                                                                        ###" >> /etc/Rapports_/rapport01.txt
+    echo "###                                                                                        ###" >> /etc/Rapports_/rapport01.txt
+    echo "###          User for Ansible: $rapport_user1                     " >> /etc/Rapports_/rapport01.txt
+    echo "###                                                                                        ###" >> /etc/Rapports_/rapport01.txt
+    echo "###          User for Git_Repos: $rapport_user2                   " >> /etc/Rapports_/rapport01.txt
+    echo "###                                                                                        ###" >> /etc/Rapports_/rapport01.txt
+    echo "###                                                                                        ###" >> /etc/Rapports_/rapport01.txt
+    echo "###                                                                                        ###" >> /etc/Rapports_/rapport01.txt
+    echo "##############################################################################################" >> /etc/Rapports_/rapport01.txt
+
+    # Part1 suppr .txt
+    rm -f ~/result_change_ip.txt
+    rm -f ~/result_gtw_for_int.txt
+    rm -f ~/result_install_bundle.txt
+    # Part2 suppr .txt
+    rm -f ~/result_install_ansible.txt
+    rm -f ~/result_install_git.txt
+    rm -f ~/result_create_repos.txt
+    rm -f ~/result_ssh_status.txt
+    rm -f ~/result_backup_ssh.txt
+    rm -f ~/user1.txt
+    rm -f ~/user2.txt
+    # Part3 suppr .txt
+    rm -f ~/result_ansible_conf.txt
 }
 
 ###############################################################################################
@@ -383,6 +440,13 @@ Set_Ansible_env(){
 
 }
 
+Configuration(){
+    Ansible_Config_
+    mk_rapport
+    echo " Right, you can find en Rapport in /etc/Rapports_/ "
+    echo " Have a nice day "
+}
 
 bare
 Set_Ansible_env
+Configuration
