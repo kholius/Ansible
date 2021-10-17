@@ -51,7 +51,7 @@ gst_hostnem(){
 }
 
 # Set IP fix
-ip_fix(){
+ip_fix_info(){
     
     # Display Info
     sudo apt install net-tools -y 
@@ -66,6 +66,9 @@ ip_fix(){
     read -p " hmmm... have you a DNS? " nemsrv_
     read -p " I suppose this Int will be up however I question you : " status_
 
+}
+
+ip_fix_apply(){
     # Display ALL conf Int and Routes
     ifconfig -s
     route
@@ -308,7 +311,7 @@ Ansible_Config_(){
                 #   echo "[$name_new_grp]" >> /etc/ansible/hosts
         #       }
     #       }
-    
+    ip_fix_apply
 }
 
 mk_rapport(){
@@ -418,7 +421,7 @@ bare(){
     # Hostname
     gst_hostnem
     # Gestion ifconfig
-    ip_fix
+    ip_fix_info
     # Bundle
     bundle
     # Updates
