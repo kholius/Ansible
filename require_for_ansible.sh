@@ -11,9 +11,9 @@
 
 # Fonction des updates
 update_sys() {
-    sudo apt update -y;
-    sudo apt list --upgradable;
-    sudo apt upgrade -y;
+    sudo apt update -y
+    sudo apt list --upgradable
+    sudo apt upgrade -y
 }
 
 # recupération des scripts

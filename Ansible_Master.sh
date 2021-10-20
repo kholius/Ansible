@@ -37,14 +37,34 @@ index_count_grp=0
 
 # 1 = bare setup : update + hostname + ifconfig/netplan + bundle_install [vim, cockpit, ]
 
+# Do updates
 update_(){
     sudo apt update -y && sudo apt upgrade -y 
 }
 
+# verification of returns displayed after last action (use for install bundle)
+verif_return(){
+    # If the last command return 1 there was a problem
+    echo $?
+    if [[ $?=1]]
+    then
+        echo " Something went wrong... "
+        $index_install=$(($index_install+1))
+
+    # If the last command return 0 is OK
+    elif [[$?=0]]
+    then
+        echo " Good. "
+        $index_install=$(($index_install+0))
+    else
+    fi
+}
+
+# setting hostname
 gst_hostnem(){
     read -p "Wich Hostname would you set ?" hostnem
     echo $hostnem
-    $hostnem > /etc/hostname
+    echo $hostnem > /etc/hostname
     cat /etc/hostname
     # prepare rapport
     rapport_change_hostnem=$(cat /etc/hostname)
@@ -63,11 +83,34 @@ ip_fix_info(){
     read -p " and Wich IP? : " ip_
     read -p " well and wich netmask? [no CIDR]" msk_
     read -p " Ok, all packet will pass by wich door [GTW]" gtw_
-    read -p " hmmm... have you a DNS? " nemsrv_
-    read -p " I suppose this Int will be up however I question you : " status_
+    read -p " Have you a DNS? " nemsrv_
+    read -p " Wich status $int_ must have ? [ up / down ] " status_
+
+
+    # Loop for status_
+    # up or down  - Ok
+    # empty or other - by default Up
+    if [[ $status_ = "up" ]]
+    then
+    echo " UP "
+
+    elif [[ $status_ = "down" ]]
+    then
+    echo " Down "
+
+    elif  [[ -z $status_ ]]
+    then
+    echo " Default status: Up "
+    status_="up"
+
+    else
+    echo " Default status: Up "
+    status_="up"
+
+    fi
 
 }
-
+# Apply IP six
 ip_fix_apply(){
     # Display ALL conf Int and Routes
     ifconfig -s
@@ -91,17 +134,40 @@ ip_fix_apply(){
 }
 
 bundle(){
+
+    # counter about install of bundle
+    index_install=0
+
+    # Install bundle with controle with verif_return function 
     echo " Install Bundle..."
     sudo apt install vim -y
+    verif_return
     sudo apt install screenfetch -y
+    verif_return
     sudo apt install cockpit -y
+    verif_return
     sudo apt install ufw -y
+    verif_return
     sudo apt install open-ssh-server -y 
     sudo apt install nmap -y 
+    verif_return
     update_
     echo " ...Done "
     
-    echo " Bundle Done. " > result_install_bundle.txt
+
+
+    # Loop for prepare result_install_bundle.txt
+    # If $index = 0 everything is OK else there is a problem 
+    if [[ $index_install -eq 0 ]]
+    then
+        echo " Bundle Done. " > result_install_bundle.txt
+    elif [[ $index_install -gt 0 ]]
+    then
+        echo " Bundle Done, but something maybe wrong... " > result_install_bundle.txt
+    else
+        echo " OOBE "
+    fi
+
     # prepare rapport
     rapport_install_bundle=$(cat result_install_bundle.txt)
 
@@ -111,15 +177,26 @@ bundle(){
 
 install_ansible(){
 
-    echo
-    echo
-    echo
+    echo " "
+    echo " "
+    echo " "
+    update_
+    apt search ansible | grep ansible
+    if [[ $? -eq 0 ]]
+    then
+        echo " Install Ansible... "
+        sudo apt install ansible -y
+        echo " Ansible Done. " > result_install_ansible.txt
+        sudo apt install ansible-doc -y 
+        sleep 5
+        echo " Everything looking good "
+        sleep 5
+        echo " ...Done "
 
-    echo " Install Ansible... "
-    sudo apt install ansible -y 
-    echo " ...Done "
-
-    echo " Ansible Done. " > result_install_ansible.txt
+    else
+        echo " "
+        echo " OOBE - repository doesn't available "
+    fi
     # prepare rapport
     rapport_install_ansible=$(cat result_install_ansible.txt)
 
@@ -229,7 +306,7 @@ Create_User_A_G(){
 
 }
 
-# 3 = ansible configuration [add_host + ssh_copy_id] + mk a rapport 
+# 3 = ansible configuration [add_host + ssh_copy_id] + mk a rapport
 
 Ansible_Config_(){
 
@@ -390,6 +467,8 @@ mk_rapport(){
     echo "###                                                                                        ###" >> /etc/Rapports_/rapport01.txt
     echo "##############################################################################################" >> /etc/Rapports_/rapport01.txt
 
+    sleep 5
+
     # Part1 suppr .txt
     rm -f ~/result_change_ip.txt
     rm -f ~/result_gtw_for_int.txt
@@ -424,6 +503,8 @@ bare(){
     ip_fix_info
     # Bundle
     bundle
+
+    sleep 5
     # Updates
     update_
 
@@ -433,11 +514,12 @@ Set_Ansible_env(){
     echo "#######################################################################"
     echo "###########                    Part Two                    ############"
     echo "#######################################################################"
-
+    sleep 5
     install_ansible
     install_git
     Create_and_Set_ssh
     Create_User_A_G
+    sleep 5
     update_
 
 
@@ -446,8 +528,13 @@ Set_Ansible_env(){
 Configuration(){
     Ansible_Config_
     mk_rapport
+
+
     echo " Right, you can find en Rapport in /etc/Rapports_/ "
     echo " Have a nice day "
+    echo " Provide by Kholius "
+    sleep 5
+    ip_fix_apply
 }
 
 bare
