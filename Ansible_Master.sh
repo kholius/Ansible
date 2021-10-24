@@ -16,13 +16,11 @@ echo "This machine must be connect to internet for a good config. Thx."
 echo "                             2/2                               "
 
 
-echo " for now, it's work only with apt!"
-
 
 # 3 part
 # 1 = bare setup : update + hostname + ifconfig/netplan + bundle_install [vim, cockpit, ]
 # 2 = install classique ansible + create user khansible + update + ssh [install; create key] + git [install, create user giter, and mkdir a repos for all script]
-# 3 = ansible configuration [add_host + ssh_copy_id] + mk a rapport 
+# 3 = ansible configurattxtn [add_host + ssh_copy_id] + mk a rapport 
 
 #################################################################################################
             # Set Var
@@ -30,19 +28,126 @@ echo " for now, it's work only with apt!"
 
 index_count_host=0
 index_count_grp=0
+internet_stat=99
 
 ##################################################################################################
-            # Set Under_Function
+            # Set Under_Functtxtn
 #################################################################################################
+
+# 0 Verify OS (for choose between $os_package_manger and yum) + check Internet conncttxtn
+# Openning
+
+# Check Internet
+check_internet(){
+
+    # ping test with 5 request 
+    echo " Checking Internet "
+    ping 8.8.8.8 -c 5
+    echo $?
+    # the ping's result make a statement 0 = Ok ; 1 = Error ; OOBE 
+    if [[ $? -eq 0 ]]
+    then
+        echo " Your Internet access is OK "
+        internet_stat=0
+        echo $internet_stat
+
+    elif [[ $? -eq 1 ]]
+    then
+        echo " Your Internet access is Down "
+        echo " The script will be stop "
+        internet_stat=100
+        echo $internet_stat
+    else
+     echo "[[ OOBE ]]"
+     internet_stat=50
+    fi
+
+    # take acttxtn if there is no internet connextxtn or OOBE
+    if [[ $internet_stat -eq 100 ]]
+    then
+        echo " WARNING, No Internet Connextxtn "
+        echo " Script will go down "
+        sleep 10
+
+        # exit from script
+        exit
+
+    elif [[ $internet_stat -eq 50 ]]
+        echo " OOBE "
+        echo " Reboot Inbound "
+        sleep 8
+
+        # reboot
+        reboot
+
+    else
+    fi
+
+}
+
+# Package Manager
+check_os_package_manager(){
+    
+    # get os_based ID and manipulate string 
+    cat /etc/os-release | grep NAME= -m 1
+    cat /etc/os-release | grep NAME= -m 1 > os.txt
+    sed -i "s/ID_LIKE=//g" os.txt
+    sed -i 's/"//g' os.txt
+    
+    #cat os.txt content in a var
+    os_distrib=$((cat os.txt))
+
+    # set the os_package_manger
+    if [[ $os_distrib="UBUNTU" ]]
+    then
+
+        os_package_manger="apt"
+
+    elif [[ $os_distrib="Debian GNU/Linux" ]]
+    then
+    
+        os_package_manger="apt"
+
+    elif [[ $os_distrib="VMware Photon OS" ]]
+    then
+        
+        os_package_manger="yum"
+
+    elif [[ $os_distrib="Fedora" ]]
+    then
+    
+        os_package_manger="yum"
+
+    elif [[ $os_distrib="Oracle Linux Server" ]]
+    then
+    
+        os_package_manger="yum"
+
+    elif [[ $os_distrib="Red Hat Enterprise Linux" ]]
+    then
+
+        os_package_manger="yum"
+    
+    elif [[ $os_distrib="Rocky Linux" ]]
+    then
+
+        os_package_manger="yum"
+    
+    else
+
+    fi
+
+}
+
 
 # 1 = bare setup : update + hostname + ifconfig/netplan + bundle_install [vim, cockpit, ]
 
 # Do updates
 update_(){
-    sudo apt update -y && sudo apt upgrade -y 
+    sudo $os_package_manger update -y && sudo $os_package_manger upgrade -y 
 }
 
-# verification of returns displayed after last action (use for install bundle)
+# verificattxtn of returns displayed after last acttxtn (use for install bundle)
 verif_return(){
     # If the last command return 1 there was a problem
     echo $?
@@ -74,9 +179,9 @@ gst_hostnem(){
 ip_fix_info(){
     
     # Display Info
-    sudo apt install net-tools -y 
+    sudo $os_package_manger install net-tools -y 
     ifconfig -s 
-    # Set var with Questions
+    # Set var with Questtxtns
     echo " Well, it's time to set up your Network Interface " 
     echo "[ Take care how your input done ]"
     read -p " Wich Interface would you set ? : " int_
@@ -138,18 +243,18 @@ bundle(){
     # counter about install of bundle
     index_install=0
 
-    # Install bundle with controle with verif_return function 
+    # Install bundle with controle with verif_return functtxtn 
     echo " Install Bundle..."
-    sudo apt install vim -y
+    sudo $os_package_manger install vim -y
     verif_return
-    sudo apt install screenfetch -y
+    sudo $os_package_manger install screenfetch -y
     verif_return
-    sudo apt install cockpit -y
+    sudo $os_package_manger install cockpit -y
     verif_return
-    sudo apt install ufw -y
+    sudo $os_package_manger install ufw -y
     verif_return
-    sudo apt install open-ssh-server -y 
-    sudo apt install nmap -y 
+    sudo $os_package_manger install open-ssh-server -y 
+    sudo $os_package_manger install nmap -y 
     verif_return
     update_
     echo " ...Done "
@@ -181,13 +286,13 @@ install_ansible(){
     echo " "
     echo " "
     update_
-    apt search ansible | grep ansible
+    $os_package_manger search ansible | grep ansible
     if [[ $? -eq 0 ]]
     then
         echo " Install Ansible... "
-        sudo apt install ansible -y
+        sudo $os_package_manger install ansible -y
         echo " Ansible Done. " > result_install_ansible.txt
-        sudo apt install ansible-doc -y 
+        sudo $os_package_manger install ansible-doc -y 
         sleep 5
         echo " Everything looking good "
         sleep 5
@@ -206,7 +311,7 @@ install_git(){
      
     # Install Git
     echo " Install Git... "
-    sudo apt install git -y 
+    sudo $os_package_manger install git -y 
     echo " ...Done "
 
     echo " Git Done. " > result_install_git.txt
@@ -231,11 +336,11 @@ Create_and_Set_ssh(){
     echo " Let's prepare the SSH Service "
     # Install service ssh + restart It to enable
     echo " Install of ssh_server "
-    sudo apt install open-ssh-server -y 
+    sudo $os_package_manger install open-ssh-server -y 
     echo " ...Done "
     sudo service sshd restart
 
-    # Generation of RSA Key without Passphrase
+    # Generattxtn of RSA Key without Passphrase
     echo " Let's keygen "
     sudo ssh-keygen -t rsa -N "" 
     echo " ...Done "
@@ -260,8 +365,8 @@ Create_and_Set_ssh(){
     ls /etc/ssh/ | grep sshd_config.bak > result_backup_ssh.txt
     if [[result_backup_ssh.txt == $NULL]]
     then
-        echo " So, there is not backup about your ssh.service, be ensure to make all needed for protect your configuration. "
-        echo " So, there is not backup about your ssh.service, be ensure to make all needed for protect your configuration. " > result_backup_ssh.txt
+        echo " So, there is not backup about your ssh.service, be ensure to make all needed for protect your configurattxtn. "
+        echo " So, there is not backup about your ssh.service, be ensure to make all needed for protect your configurattxtn. " > result_backup_ssh.txt
     fi
 
     # prepare rapport
@@ -306,14 +411,14 @@ Create_User_A_G(){
 
 }
 
-# 3 = ansible configuration [add_host + ssh_copy_id] + mk a rapport
+# 3 = ansible configurattxtn [add_host + ssh_copy_id] + mk a rapport
 
 Ansible_Config_(){
 
     # the user want he use the pre conf? 
     read -p " Would you use the pre-conf settings? [y/n] " rep_preconf
 
-    # If yes --action_for_it
+    # If yes --acttxtn_for_it
     # If no --dew_it_himself
     if [[$rep_preconf -eq "y"]]
     then
@@ -359,7 +464,7 @@ Ansible_Config_(){
         echo " The general config is stored on"
         sudo ls /etc/ansible/ | grep ansible.cfg
 
-        echo " Pre-config denied, the user must do configuration himself. (See docs) " > result_ansible_conf.txt
+        echo " Pre-config denied, the user must do configurattxtn himself. (See docs) " > result_ansible_conf.txt
         rapport_ansible_conf=$(cat result_ansible_conf.txt)
 
     else
@@ -435,7 +540,7 @@ mk_rapport(){
     echo "###                                                                                        ###" >> /etc/Rapports_/rapport01.txt
     echo "###      State of Install: $rapport_install_ansible           " >> /etc/Rapports_/rapport01.txt
     echo "###                                                                                        ###" >> /etc/Rapports_/rapport01.txt
-    echo "###      State of Configuration : $rapport_ansible_conf       " >> /etc/Rapports_/rapport01.txt
+    echo "###      State of Configurattxtn : $rapport_ansible_conf       " >> /etc/Rapports_/rapport01.txt
     echo "###                                                                                        ###" >> /etc/Rapports_/rapport01.txt
     echo "##############################################################################################" >> /etc/Rapports_/rapport01.txt
     echo "###______________________________________[Git]_____________________________________________###" >> /etc/Rapports_/rapport01.txt
@@ -486,7 +591,7 @@ mk_rapport(){
 }
 
 ###############################################################################################
-                # Set Upper Function
+                # Set Upper Functtxtn
 ###############################################################################################
 
 bare(){
@@ -495,11 +600,17 @@ bare(){
     echo "###########                    Part One                    ############"
     echo "#######################################################################"
 
+    # Check Internet Access
+    check_internet
+
+    # Check wich package manager will be used
+    check_os_package_manager
+
     # Updates
     update_
     # Hostname
     gst_hostnem
-    # Gestion ifconfig
+    # Gesttxtn ifconfig
     ip_fix_info
     # Bundle
     bundle
@@ -525,7 +636,7 @@ Set_Ansible_env(){
 
 }
 
-Configuration(){
+Configurattxtn(){
     Ansible_Config_
     mk_rapport
 
@@ -539,4 +650,4 @@ Configuration(){
 
 bare
 Set_Ansible_env
-Configuration
+Configurattxtn
