@@ -13,7 +13,7 @@ echo "                                                              "
 echo "This script has been create by :Kholius                       "
 echo "Be sure to be root or have the good right to execute this script"
 echo "This machine must be connect to internet for a good config. Thx."
-echo "                                                            "
+echo "                          ###                                "
 
 
 
