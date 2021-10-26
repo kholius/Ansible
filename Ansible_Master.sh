@@ -13,7 +13,7 @@ echo "                                                              "
 echo "This script has been create by :Kholius                       "
 echo "Be sure to be root or have the good right to execute this script"
 echo "This machine must be connect to internet for a good config. Thx."
-echo "                             2/2                               "
+echo "                                                            "
 
 
 
@@ -105,7 +105,7 @@ check_os_package_manager(){
 
     elif [[ $os_distrib="Debian GNU/Linux" ]]
     then
-    
+
         os_package_manger="apt"
 
     elif [[ $os_distrib="VMware Photon OS" ]]
@@ -594,6 +594,14 @@ mk_rapport(){
                 # Set Upper Functtxtn
 ###############################################################################################
 
+starter(){
+
+    # basic verification
+    check_internet
+    check_os_package_manager
+
+}
+
 bare(){
 
     echo "#######################################################################"
@@ -648,6 +656,38 @@ Configurattxtn(){
     ip_fix_apply
 }
 
-bare
-Set_Ansible_env
-Configurattxtn
+scriptounet(){
+
+    starter
+
+    if [[$internet_stat -eq 0]]
+    then
+
+        bare
+        Set_Ansible_env
+        Configurattxtn
+    
+    elif [[$internet_stat -eq 99]]
+    then 
+
+        echo " Ok but take care about your Internet connection..."
+        check_internet
+        bare
+        Set_Ansible_env
+        Configurattxtn
+
+    else
+
+        echo " We've got a situation here "
+        exit
+
+    fi
+
+
+    
+}
+
+
+
+
+scriptounet
