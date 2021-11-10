@@ -34,7 +34,7 @@ internet_stat=99
             # Set Under_Functtxtn
 #################################################################################################
 
-# 0 Verify OS (for choose between $os_package_manger and yum) + check Internet conncttxtn
+# 0 Verify OS (for choose between $os_package_manager and yum) + check Internet conncttxtn
 # Openning
 
 # Check Internet
@@ -73,6 +73,7 @@ check_internet(){
         exit
 
     elif [[ $internet_stat -eq 50 ]]
+    then
         echo " OOBE "
         echo " Reboot Inbound "
         sleep 8
@@ -81,6 +82,8 @@ check_internet(){
         reboot
 
     else
+    
+    echo " OOBE "
     fi
 
 }
@@ -91,51 +94,58 @@ check_os_package_manager(){
     # get os_based ID and manipulate string 
     cat /etc/os-release | grep NAME= -m 1
     cat /etc/os-release | grep NAME= -m 1 > os.txt
-    sed -i "s/ID_LIKE=//g" os.txt
+    sed -i "s/NAME=//g" os.txt
     sed -i 's/"//g' os.txt
     
     #cat os.txt content in a var
-    os_distrib=$((cat os.txt))
+    os_distrib=$(cat os.txt)
+    echo $os_distrib
 
-    # set the os_package_manger
-    if [[ $os_distrib="UBUNTU" ]]
+    # set the os_package_manager
+    if [[ $os_distrib=="UBUNTU" ]]
     then
 
-        os_package_manger="apt"
+        os_package_manager1="apt"
 
-    elif [[ $os_distrib="Debian GNU/Linux" ]]
+    elif [[ $os_distrib=="Debian GNU/Linux" ]]
     then
 
-        os_package_manger="apt"
+        os_package_manager1="apt"
 
     elif [[ $os_distrib="VMware Photon OS" ]]
     then
         
-        os_package_manger="yum"
+        os_package_manager1="yum"
 
-    elif [[ $os_distrib="Fedora" ]]
+    elif [[ $os_distrib=="Fedora" ]]
     then
     
-        os_package_manger="yum"
+        os_package_manager1="yum"
 
-    elif [[ $os_distrib="Oracle Linux Server" ]]
+    elif [[ $os_distrib=="Oracle Linux Server" ]]
     then
     
-        os_package_manger="yum"
+        os_package_manager1="yum"
 
-    elif [[ $os_distrib="Red Hat Enterprise Linux" ]]
+    elif [[ $os_distrib=="Red Hat Enterprise Linux" ]]
     then
 
-        os_package_manger="yum"
+        os_package_manager1="yum"
     
-    elif [[ $os_distrib="Rocky Linux" ]]
+    elif [[ $os_distrib=="Rocky Linux" ]]
     then
 
-        os_package_manger="yum"
+        os_package_manager1="yum"
     
     else
 
+    echo " OOBE Package "
+
     fi
+
+    echo $os_package_manager1
+    echo $os_package_manager1 > usable_os_package_manager.txt
+
 
 }
 
@@ -144,20 +154,20 @@ check_os_package_manager(){
 
 # Do updates
 update_(){
-    sudo $os_package_manger update -y && sudo $os_package_manger upgrade -y 
+    sudo $os_package_manager update -y && sudo $os_package_manager upgrade -y 
 }
 
 # verificattxtn of returns displayed after last acttxtn (use for install bundle)
 verif_return(){
     # If the last command return 1 there was a problem
     echo $?
-    if [[ $?=1]]
+    if [[ $? -eq 1]]
     then
         echo " Something went wrong... "
         $index_install=$(($index_install+1))
 
     # If the last command return 0 is OK
-    elif [[$?=0]]
+    elif [[$? -eq 0]]
     then
         echo " Good. "
         $index_install=$(($index_install+0))
@@ -179,7 +189,7 @@ gst_hostnem(){
 ip_fix_info(){
     
     # Display Info
-    sudo $os_package_manger install net-tools -y 
+    sudo $os_package_manager install net-tools -y 
     ifconfig -s 
     # Set var with Questtxtns
     echo " Well, it's time to set up your Network Interface " 
@@ -245,16 +255,16 @@ bundle(){
 
     # Install bundle with controle with verif_return functtxtn 
     echo " Install Bundle..."
-    sudo $os_package_manger install vim -y
+    sudo $os_package_manager install vim -y
     verif_return
-    sudo $os_package_manger install screenfetch -y
+    sudo $os_package_manager install screenfetch -y
     verif_return
-    sudo $os_package_manger install cockpit -y
+    sudo $os_package_manager install cockpit -y
     verif_return
-    sudo $os_package_manger install ufw -y
+    sudo $os_package_manager install ufw -y
     verif_return
-    sudo $os_package_manger install open-ssh-server -y 
-    sudo $os_package_manger install nmap -y 
+    sudo $os_package_manager install open-ssh-server -y 
+    sudo $os_package_manager install nmap -y 
     verif_return
     update_
     echo " ...Done "
@@ -286,13 +296,13 @@ install_ansible(){
     echo " "
     echo " "
     update_
-    $os_package_manger search ansible | grep ansible
+    $os_package_manager search ansible | grep ansible
     if [[ $? -eq 0 ]]
     then
         echo " Install Ansible... "
-        sudo $os_package_manger install ansible -y
+        sudo $os_package_manager install ansible -y
         echo " Ansible Done. " > result_install_ansible.txt
-        sudo $os_package_manger install ansible-doc -y 
+        sudo $os_package_manager install ansible-doc -y 
         sleep 5
         echo " Everything looking good "
         sleep 5
@@ -311,7 +321,7 @@ install_git(){
      
     # Install Git
     echo " Install Git... "
-    sudo $os_package_manger install git -y 
+    sudo $os_package_manager install git -y 
     echo " ...Done "
 
     echo " Git Done. " > result_install_git.txt
@@ -336,7 +346,7 @@ Create_and_Set_ssh(){
     echo " Let's prepare the SSH Service "
     # Install service ssh + restart It to enable
     echo " Install of ssh_server "
-    sudo $os_package_manger install open-ssh-server -y 
+    sudo $os_package_manager install open-ssh-server -y 
     echo " ...Done "
     sudo service sshd restart
 
@@ -599,6 +609,9 @@ starter(){
     # basic verification
     check_internet
     check_os_package_manager
+    os_package_manager=$(cat usable_os_package_manager.txt)
+    echo $os_package_manager
+    rm -rf usable_os_package_manager.txt
 
 }
 
