@@ -266,6 +266,8 @@ bundle(){
     sudo $os_package_manager install open-ssh-server -y 
     sudo $os_package_manager install nmap -y 
     verif_return
+    sudo $os_package_manager install sshpass -y 
+    verif_return
     update_
     echo " ...Done "
     
@@ -704,3 +706,31 @@ scriptounet(){
 
 
 scriptounet
+
+
+
+
+
+
+
+# Add a verification in check_internet
+    # if nc -zw1 google.com 443; then
+    # echo OK
+
+# for OS checking
+    # watch lsb_release
+
+# hostname setting
+    # hostnameclt -set-hostname $hostnem
+
+# for ip by ifconfig
+    # use more Ip than ifconfig
+
+# setting SUDOERS
+    # create another file "mysudoers" and add this file in sudoers.d
+    # Keep SUDOERS clean.
+
+# Install without Internet
+    # in case of the server hasn't an internet connnexion, 
+    # see for keep somewhere every bin of all app
+    # https://www.linux.com/news/how-install-packages-source-linux/
