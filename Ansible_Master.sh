@@ -47,19 +47,66 @@ check_internet(){
     # the ping's result make a statement 0 = Ok ; 1 = Error ; OOBE 
     if [[ $? -eq 0 ]]
     then
-        echo " Your Internet access is OK "
-        internet_stat=0
-        echo $internet_stat
+        echo " Ping -OK "
+        echo " Let's try a HTTPS request "
+        icmp_stat=0
+        echo $icmp_stat > icmp_result.txt
+
+        if nc -zw1 google.com 443
+        then
+            
+            https_stat=0
+            echo " Your Internet access is OK "
+            internet_stat=0
+            echo $internet_stat
+            echo $https_stat > https_result.txt
+
+        else
+
+            https_stat=1
+            echo " HTTPS request failed "
+            internet_stat=100
+            echo $https_stat > https_result.txt
+
+        fi
 
     elif [[ $? -eq 1 ]]
     then
-        echo " Your Internet access is Down "
-        echo " The script will be stop "
+
+        echo " Your Internet access is unusual "
         internet_stat=100
         echo $internet_stat
+        icmp_stat=1
+        echo $icmp_stat > icmp_result.txt
+
+        echo " Maybe ICMP:8 is denied... "
+        echo " Right, let's try a HTTPS request "
+        if nc -zw1 google.com 443
+        then
+            
+            echo " Your Internet access is OK "
+            https_stat=0
+            internet_stat=0
+            echo $internet_stat
+            echo $https_stat > https_result.txt
+        
+        else
+
+            https_stat=1
+            echo " HTTPS request failed "
+            echo $https_stat > https_result.txt
+            internet_stat=100
+            
+        fi
     else
+
      echo "[[ OOBE ]]"
      internet_stat=50
+     icmp_stat=2
+     https_stat=2
+
+    echo $icmp_stat > icmp_result.txt
+    echo $https_stat > https_result.txt
     fi
 
     # take acttxtn if there is no internet connextxtn or OOBE
@@ -86,16 +133,28 @@ check_internet(){
     echo " OOBE "
     fi
 
+    https_rapport=$(cat https_result.txt)
+    icmp_rapport=$(cat icmp_result.txt)
+
+
 }
 
 # Package Manager
 check_os_package_manager(){
     
     # get os_based ID and manipulate string 
+    # os-release is available on every distib
+    # lsb-release isn't available on RPM based OS 
+
     cat /etc/os-release | grep NAME= -m 1
     cat /etc/os-release | grep NAME= -m 1 > os.txt
     sed -i "s/NAME=//g" os.txt
     sed -i 's/"//g' os.txt
+
+    #cat /etc/lsb-release | grep DISTRIB_ID= -m 1
+    #cat /etc/lsb-release | grep DISTRIB_ID= -m 1 > os.txt
+    #sed -i "s/DISTRIB_ID=//g" os.txt
+    #sed -i 's/"//g' os.txt
     
     #cat os.txt content in a var
     os_distrib=$(cat os.txt)
@@ -179,25 +238,54 @@ verif_return(){
 gst_hostnem(){
     read -p "Wich Hostname would you set ?" hostnem
     echo $hostnem
-    echo $hostnem > /etc/hostname
-    cat /etc/hostname
+    # echo $hostnem > /etc/hostname
+    # cat /etc/hostname
     # prepare rapport
-    rapport_change_hostnem=$(cat /etc/hostname)
+    # rapport_change_hostnem=$(cat /etc/hostname)
+    hostnameclt -set-hostname $hostnem
+
+        # verificattxtn of returns displayed after last acttxtn (use for install bundle)
+        verif_return_hostname(){
+            # If the last command return 1 there was a problem
+            echo $?
+            if [[ $? -eq 1]]
+            then
+
+                echo " Something went wrong..."
+                echo " $hostnem can not be apply "
+                echo " [ Retry later ]"
+
+            # If the last command return 0 is OK
+            elif [[$? -eq 0]]
+            then
+                echo " Good. "
+                echo " [ $hostnem applied ] "
+                echo " [ a reboot will be needed at the end ]"
+            else
+                echo " OOBE Hostname "
+            fi
+        }
+
+    verif_return_hostname
+
 }
 
 # Set IP fix
 ip_fix_info(){
     
     # Display Info
-    sudo $os_package_manager install net-tools -y 
-    ifconfig -s 
+    # sudo $os_package_manager install net-tools -y 
+    # ifconfig -s 
+    ip addr
+    ip route
+
     # Set var with Questtxtns
     echo " Well, it's time to set up your Network Interface " 
     echo "[ Take care how your input done ]"
     read -p " Wich Interface would you set ? : " int_
     read -p " and Wich IP? : " ip_
-    read -p " well and wich netmask? [no CIDR]" msk_
-    read -p " Ok, all packet will pass by wich door [GTW]" gtw_
+    read -p " well and your netmask? [CIDR]" msk_
+    read -p " By wich gateway [GTW]" gtw_
     read -p " Have you a DNS? " nemsrv_
     read -p " Wich status $int_ must have ? [ up / down ] " status_
 
@@ -207,20 +295,20 @@ ip_fix_info(){
     # empty or other - by default Up
     if [[ $status_ = "up" ]]
     then
-    echo " UP "
+        echo " UP "
 
     elif [[ $status_ = "down" ]]
     then
-    echo " Down "
+        echo " Down "
 
     elif  [[ -z $status_ ]]
     then
-    echo " Default status: Up "
-    status_="up"
+        echo " Default status: Up "
+        status_="up"
 
     else
-    echo " Default status: Up "
-    status_="up"
+        echo " Default status: Up "
+        status_="up"
 
     fi
 
@@ -228,18 +316,40 @@ ip_fix_info(){
 # Apply IP six
 ip_fix_apply(){
     # Display ALL conf Int and Routes
-    ifconfig -s
-    route
+    # ifconfig -s
+    # route
+    ip addr | grep $int_
+    ip route
+
     # Setting IP fix and Add route
-    ifconfig -v $int_ $ip_ netmask $msk_ $status_ # ifconfig  -v ens33 192.168.1.199 netmask 255.255.255.0 up
-    route add $gtw_ $int # route add default 192.168.1.240 ens33
+    # ifconfig -v $int_ $ip_ netmask $msk_ $status_ # ifconfig  -v ens33 192.168.1.199 netmask 255.255.255.0 up
+    # route add $gtw_ $int # route add default 192.168.1.240 ens33
+    ip link set $int_ $status_ # set the status 
+    ip addr add $ip_/$msk_ dev $int_ # apply IP addr/cidr on a nic
+    ip route add $gtw_/$msk_ dev $int # apply GTW on a nic
+        
+    echo "
+    
+    
+    
+    
+    
+        "
+    sleep 10
     # Get Output for Rapport
-    ifconfig $int_ | grep inet > result_change_ip.txt
-    route | grep $int > result_gtw_for_int.txt
+    # ifconfig $int_ | grep inet > result_change_ip.txt
+    # route | grep $int > result_gtw_for_int.txt
+    ip addr | grep inet > result_change_ip.txt
+    ip route | grep $int_ > result_gtw_for_int.txt
+
     # Print Result to User
+    sleep 5
+    ip addr | grep $int_ 
+    ip route
     echo " Change Apply... "
-    route | grep $int_
-    ifconfig $int_
+    # route | grep $int_
+    sleep 5
+    # ifconfig $int_
     echo " ...Done "
 
     # prepare rapport
@@ -282,7 +392,7 @@ bundle(){
     then
         echo " Bundle Done, but something maybe wrong... " > result_install_bundle.txt
     else
-        echo " OOBE "
+        echo " OOBE bundle "
     fi
 
     # prepare rapport
@@ -400,8 +510,26 @@ Create_User_A_G(){
     sudo useradd khansible
     echo khansible:kholius | chpasswd # This password NEED to be change
     sudo cat /etc/shadow | grep khansible
-    echo "khansible ALL=(ALL:ALL) ALL" >> /etc/sudoers
-    echo "kholius ALL=(ALL:ALL) ALL" >> /etc/sudoers
+
+    ls /etc/sudoers.d | grep sudoers_ansible > if_file_sudoers_ansible_exist.txt
+    if_file_sudoers_exist=$(cat if_file_sudoers_ansible_exist.txt)
+
+    if [[ $if_file_sudoers_exist -z ]]
+    then
+        touch /etc/sudoers.d/sudoers_ansible
+
+    elif [[$if_file_sudoers_exist == "sudoers_ansible"]]
+    then
+        echo " OK "
+    else
+        echo "Forcing Inbound..."
+        touch /etc/sudoers.d/sudoers_ansible
+
+
+
+    # mkdir /etc/sudoers.d/sudoers_ansible
+    echo "khansible ALL=(ALL:ALL) ALL" >> /etc/sudoers.d/sudoers_ansible
+    echo "kholius ALL=(ALL:ALL) ALL" >> /etc/sudoers.d/sudoers_ansible
 
     echo "[...]"
     echo "      and         "
@@ -420,6 +548,8 @@ Create_User_A_G(){
 
     rapport_user1=$(cat user1.txt)
     rapport_user2=$(cat user2.txt)
+
+     rm -rf ~/if_file_sudoers_ansible_exist.txt
 
 }
 
@@ -519,70 +649,76 @@ mk_rapport(){
     echo " Rapport Inbound..."
     echo ""
     echo ""
+    sleep 5
     echo " Well did you see the weather today? It's a good day for IT right? "
     echo ""
+    sleep 5
     sudo mkdir /etc/Rapports_/
     echo ""
     echo ""
     echo ""
 
-    echo "###############################################################################################" >> /etc/Rapports_/rapport01.txt
-    echo "###                               Rapport from Ansible Master                               ###" >> /etc/Rapports_/rapport01.txt
-    echo "                     Done the:  $date_to_rapport        " >> /etc/Rapports_/rapport01.txt
-    echo "###############################################################################################" >> /etc/Rapports_/rapport01.txt
-    echo "###                                           |                                             ###" >> /etc/Rapports_/rapport01.txt
-    echo "###   Hostname set : $rapport_change_hostnem  | Done by Administrator : $whoami_for_rapport "  >> /etc/Rapports_/rapport01.txt
-    echo "###                                           |                                             ###"  >> /etc/Rapports_/rapport01.txt
-    echo "###############################################################################################"  >> /etc/Rapports_/rapport01.txt
-    echo "###############################################################################################" >> /etc/Rapports_/rapport01.txt
-    echo "###____________________________________[NETWORK]____________________________________________###" >> /etc/Rapports_/rapport01.txt
-    echo "###                                                                                         ###" >> /etc/Rapports_/rapport01.txt
-    echo "###_    Setting IP :  $rapport_change_ip                               "  >> /etc/Rapports_/rapport01.txt
-    echo "###                                                                                         ###" >> /etc/Rapports_/rapport01.txt
-    echo "###_    Gateway :  $rapport_gtw_for_int                                 " >> /etc/Rapports_/rapport01.txt
-    echo "###                                                                                         ###" >> /etc/Rapports_/rapport01.txt
-    echo "###############################################################################################" >> /etc/Rapports_/rapport01.txt
-    echo "###____________________________________[Bundle]____________________________________________###" >> /etc/Rapports_/rapport01.txt
-    echo "###                                                                                        ###" >> /etc/Rapports_/rapport01.txt
-    echo "###_     State of Install: $rapport_install_bundle                              " >> /etc/Rapports_/rapport01.txt
-    echo "###                                                                                        ###" >> /etc/Rapports_/rapport01.txt
-    echo "###                                                                                        ###" >> /etc/Rapports_/rapport01.txt
-    echo "##############################################################################################" >> /etc/Rapports_/rapport01.txt
-    echo "###_____________________________________[Ansible]__________________________________________###" >> /etc/Rapports_/rapport01.txt
-    echo "###                                                                                        ###" >> /etc/Rapports_/rapport01.txt
-    echo "###      State of Install: $rapport_install_ansible           " >> /etc/Rapports_/rapport01.txt
-    echo "###                                                                                        ###" >> /etc/Rapports_/rapport01.txt
-    echo "###      State of Configurattxtn : $rapport_ansible_conf       " >> /etc/Rapports_/rapport01.txt
-    echo "###                                                                                        ###" >> /etc/Rapports_/rapport01.txt
-    echo "##############################################################################################" >> /etc/Rapports_/rapport01.txt
-    echo "###______________________________________[Git]_____________________________________________###" >> /etc/Rapports_/rapport01.txt
-    echo "###                                                                                        ###" >> /etc/Rapports_/rapport01.txt
-    echo "###                                                                                        ###" >> /etc/Rapports_/rapport01.txt
-    echo "###      State of Install: $rapport_install_git                                            _" >> /etc/Rapports_/rapport01.txt
-    echo "###                                                                                        ###" >> /etc/Rapports_/rapport01.txt
-    echo "###      Git repos: $rapport_create_repos              " >> /etc/Rapports_/rapport01.txt
-    echo "###      Can be foundon : /etc/ansible_repos/          " >> /etc/Rapports_/rapport01.txt
-    echo "###                                                                                        ###" >> /etc/Rapports_/rapport01.txt
-    echo "##############################################################################################" >> /etc/Rapports_/rapport01.txt
-    echo "###______________________________________[Ssh]_____________________________________________###" >> /etc/Rapports_/rapport01.txt
-    echo "###                                                                                        ###" >> /etc/Rapports_/rapport01.txt
-    echo "###   Package SSH: Open-ssh-server                            " >> /etc/Rapports_/rapport01.txt
-    echo "###                                                                                        ###" >> /etc/Rapports_/rapport01.txt
-    echo "###   Status: $rapport_ssh_status                             " >> /etc/Rapports_/rapport01.txt
-    echo "###                                                                                        ###" >> /etc/Rapports_/rapport01.txt
-    echo "###   Backup: $rapport_ssh_backup                             " >> /etc/Rapports_/rapport01.txt
-    echo "###                                                                                        ###" >> /etc/Rapports_/rapport01.txt
-    echo "##############################################################################################" >> /etc/Rapports_/rapport01.txt
-    echo "###______________________________________[User]____________________________________________###" >> /etc/Rapports_/rapport01.txt
-    echo "###                                                                                        ###" >> /etc/Rapports_/rapport01.txt
-    echo "###                                                                                        ###" >> /etc/Rapports_/rapport01.txt
-    echo "###          User for Ansible: $rapport_user1                     " >> /etc/Rapports_/rapport01.txt
-    echo "###                                                                                        ###" >> /etc/Rapports_/rapport01.txt
-    echo "###          User for Git_Repos: $rapport_user2                   " >> /etc/Rapports_/rapport01.txt
-    echo "###                                                                                        ###" >> /etc/Rapports_/rapport01.txt
-    echo "###                                                                                        ###" >> /etc/Rapports_/rapport01.txt
-    echo "###                                                                                        ###" >> /etc/Rapports_/rapport01.txt
-    echo "##############################################################################################" >> /etc/Rapports_/rapport01.txt
+    echo "###############################################################################################
+          ###                               Rapport from Ansible Master                               ###
+          ###            Done the:  $date_to_rapport        
+          ###############################################################################################
+          ###                                           |                                             ###
+          ###   Hostname set : $rapport_change_hostnem  | Done by Administrator : $whoami_for_rapport 
+          ###                                           |                                            
+          ###############################################################################################
+          ###############################################################################################
+          ###____________________________________[NETWORK]____________________________________________###
+          ###                                                                                         ###
+          ###_    Setting IP :  $rapport_change_ip                               
+          ###                                                                                         ###
+          ###_    Gateway :  $rapport_gtw_for_int                                 
+          ###                                                                                         ###
+          ###_    Protocols:  [ 0 -ok / 1 -ko ]  
+          ###           - ICMP: $icmp_stat
+          ###           - HTTPS: $https_stat   
+          ###                                                                                         ###
+          ###############################################################################################
+          ###____________________________________[Bundle]_____________________________________________###
+          ###
+          ###_     State of Install: $rapport_install_bundle                              
+          ###                                                                                        ###
+          ###                                                                                        ###
+          ##############################################################################################
+          ###_____________________________________[Ansible]__________________________________________###
+          ###                                                                                        ###
+          ###      State of Install: $rapport_install_ansible           
+          ###                                                                                        ###
+          ###      State of Configurattxtn : $rapport_ansible_conf       
+          ###                                                                                        ###
+          ##############################################################################################
+          ###______________________________________[Git]_____________________________________________###
+          ###                                                                                        ###
+          ###      State of Install: $rapport_install_git                                            
+          ###                                                                                        
+          ###      Git repos: $rapport_create_repos              
+          ###
+          ###      Can be foundon : /etc/ansible_repos/         
+          ###                                                                                        ###
+          ##############################################################################################
+          ###______________________________________[Ssh]_____________________________________________###
+          ###                                                                                        ###
+          ###   Package SSH: Open-ssh-server                            
+          ###                                                                                        
+          ###   Status: $rapport_ssh_status                           
+          ###                                                                                        
+          ###   Backup: $rapport_ssh_backup                             
+          ###                                                                                        ###
+          ##############################################################################################
+          ###______________________________________[User]____________________________________________###
+          ###                                                                                        ###
+          ###                                                                                        ###
+          ###          User for Ansible: $rapport_user1                    
+          ###                                                                                        
+          ###          User for Git_Repos: $rapport_user2                  
+          ###                                                                                        ###
+          ###                                                                                        ###
+          ###                                                                                        ###
+          ##############################################################################################" >> /etc/Rapports_/rapport01.txt
 
     sleep 5
 
@@ -600,6 +736,9 @@ mk_rapport(){
     rm -f ~/user2.txt
     # Part3 suppr .txt
     rm -f ~/result_ansible_conf.txt
+    rm -f ~/icmp_result.txt
+    rm -f ~/https_result.txt
+
 }
 
 ###############################################################################################
@@ -713,20 +852,21 @@ scriptounet
 
 
 
-# Add a verification in check_internet
+# Add a verification in check_internet ------------- OK
     # if nc -zw1 google.com 443; then
     # echo OK
 
-# for OS checking
+# for OS checking   ---------------- OK 
     # watch lsb_release
+    # os-release is available in every distrib lsb no!
 
-# hostname setting
-    # hostnameclt -set-hostname $hostnem
+# hostname setting ------------------- OK 
+    # hostnameclt set-hostname $hostnem
 
-# for ip by ifconfig
+# for ip by ifconfig ---------------------- OK // test Inbound
     # use more Ip than ifconfig
 
-# setting SUDOERS
+# setting SUDOERS -----------------------------OK // test Inbound
     # create another file "mysudoers" and add this file in sudoers.d
     # Keep SUDOERS clean.
 
