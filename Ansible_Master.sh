@@ -217,23 +217,31 @@ update_(){
 }
 
 # verificattxtn of returns displayed after last acttxtn (use for install bundle)
+
 verif_return(){
     # If the last command return 1 there was a problem
-    echo $?
-    if [[ $? -eq 1]]
+    echo $? >> r1.txt
+    if [[ $r1 -eq '1' ]]
     then
         echo " Something went wrong... "
-        $index_install=$(($index_install+1))
+        index_install=$(($index_install+1))
+        echo $index_install
+
 
     # If the last command return 0 is OK
-    elif [[$? -eq 0]]
+    elif [[ $r1 -eq '0' ]]
     then
         echo " Good. "
-        $index_install=$(($index_install+0))
-    else
-    fi
-}
+        let index_install=$(($index_install+0))
+        echo $index_install
 
+    else
+        echo "OOBE"
+    fi
+
+    rm -rf ~/r1.txt
+
+}
 # setting hostname
 gst_hostnem(){
     read -p "Wich Hostname would you set ?" hostnem
@@ -247,8 +255,8 @@ gst_hostnem(){
         # verificattxtn of returns displayed after last acttxtn (use for install bundle)
         verif_return_hostname(){
             # If the last command return 1 there was a problem
-            echo $?
-            if [[ $? -eq 1]]
+            echo $? >> r2.txt
+            if [[ $? -eq 1 ]]
             then
 
                 echo " Something went wrong..."
@@ -256,7 +264,7 @@ gst_hostnem(){
                 echo " [ Retry later ]"
 
             # If the last command return 0 is OK
-            elif [[$? -eq 0]]
+            elif [[$? -eq 0 ]]
             then
                 echo " Good. "
                 echo " [ $hostnem applied ] "
@@ -264,6 +272,9 @@ gst_hostnem(){
             else
                 echo " OOBE Hostname "
             fi
+
+            rm -rf ~/r2.txt
+
         }
 
     verif_return_hostname
@@ -485,7 +496,7 @@ Create_and_Set_ssh(){
     echo " here, we save the SSH_conf "
     cp /etc/ssh/sshd_config /etc/ssh/sshd_config.bak
     ls /etc/ssh/ | grep sshd_config.bak > result_backup_ssh.txt
-    if [[result_backup_ssh.txt == $NULL]]
+    if [[ result_backup_ssh.txt == $NULL ]]
     then
         echo " So, there is not backup about your ssh.service, be ensure to make all needed for protect your configurattxtn. "
         echo " So, there is not backup about your ssh.service, be ensure to make all needed for protect your configurattxtn. " > result_backup_ssh.txt
@@ -518,7 +529,7 @@ Create_User_A_G(){
     then
         touch /etc/sudoers.d/sudoers_ansible
 
-    elif [[$if_file_sudoers_exist == "sudoers_ansible"]]
+    elif [[ $if_file_sudoers_exist == "sudoers_ansible" ]]
     then
         echo " OK "
     else
@@ -562,7 +573,7 @@ Ansible_Config_(){
 
     # If yes --acttxtn_for_it
     # If no --dew_it_himself
-    if [[$rep_preconf -eq "y"]]
+    if [[ $rep_preconf -eq "y" ]]
     then
 
         echo " Let's use the pre-config provide by Kholius... "
@@ -590,7 +601,7 @@ Ansible_Config_(){
     
     
     
-    elif [[$rep_preconf -eq "n"]]
+    elif [[ $rep_preconf -eq "n" ]]
     then
         echo " Well dew it yourself! UwU "
 
@@ -814,14 +825,14 @@ scriptounet(){
 
     starter
 
-    if [[$internet_stat -eq 0]]
+    if [[ $internet_stat -eq 0 ]]
     then
 
         bare
         Set_Ansible_env
         Configurattxtn
     
-    elif [[$internet_stat -eq 99]]
+    elif [[ $internet_stat -eq 99 ]]
     then 
 
         echo " Ok but take care about your Internet connection..."
