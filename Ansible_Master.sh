@@ -525,7 +525,7 @@ Create_User_A_G(){
     ls /etc/sudoers.d | grep sudoers_ansible > if_file_sudoers_ansible_exist.txt
     if_file_sudoers_exist=$(cat if_file_sudoers_ansible_exist.txt)
 
-    if [[ $if_file_sudoers_exist -z ]]
+    if [[ -f $if_file_sudoers_exist ]]
     then
         touch /etc/sudoers.d/sudoers_ansible
 
@@ -577,25 +577,25 @@ Ansible_Config_(){
     then
 
         echo " Let's use the pre-config provide by Kholius... "
-        
+        sleep 3
         echo ""
         echo ""
         echo ""
-
+        sleep 3
         echo " Let's do for hosts file"
         sudo cp ~/YAML-Ansible/hosts  /etc/ansible/
         echo " ...Done "
-        
+        sleep 3
         echo ""
         echo ""
         echo ""
-
+        sleep 3
         echo " Transfert all of playbooks "
         sudo mkdir /etc/ansible/playbooks/
         sudo cp ~/YAML-Ansible/*.yaml /etc/ansible/playbooks/
         sudo ls /etc/ansible/playbooks/ | grep .yml
         echo " ...Done "
-
+        sleep 1
         echo " Pre-config provide by Kholius; done. " > result_ansible_conf.txt
         rapport_ansible_conf=$(cat result_ansible_conf.txt)
     
@@ -604,7 +604,7 @@ Ansible_Config_(){
     elif [[ $rep_preconf -eq "n" ]]
     then
         echo " Well dew it yourself! UwU "
-
+        sleep 5
         echo " You can find all of file for config Ansible on : "
         sudo ls /etc/ | grep ansible
 
@@ -758,8 +758,10 @@ mk_rapport(){
 
 starter(){
 
-    # basic verification
+    # basic checking
+    # internet
     check_internet
+    # OS package mgmt
     check_os_package_manager
     os_package_manager=$(cat usable_os_package_manager.txt)
     echo $os_package_manager
