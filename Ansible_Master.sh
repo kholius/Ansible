@@ -535,7 +535,7 @@ Create_User_A_G(){
     else
         echo "Forcing Inbound..."
         touch /etc/sudoers.d/sudoers_ansible
-
+    fi
 
 
     # mkdir /etc/sudoers.d/sudoers_ansible
@@ -562,7 +562,7 @@ Create_User_A_G(){
 
      rm -rf ~/if_file_sudoers_ansible_exist.txt
 
-}
+    }
 
 # 3 = ansible configurattxtn [add_host + ssh_copy_id] + mk a rapport
 
