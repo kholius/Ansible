@@ -483,11 +483,11 @@ Create_and_Set_ssh(){
     echo " "
 
     # Restart the service
-    sudo service sshd status
+    sudo service sshd status | grep Active
     echo " "
     sudo service sshd restart
     echo " "
-    sudo service sshd status
+    sudo service sshd status | grep Active
     echo " "
     echo " Ready to do id-copy "
 
